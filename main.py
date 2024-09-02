@@ -32,17 +32,21 @@ def send_welcome(message):
     user_id=user.id
     message_text=message.text
     username=user.username
-    if len(message_text)>7:
-        message_text=message_text.split(' ')
-        key=message_text[1]
-        
-        # Отправка ответа пользователю (по желанию)
-        payload={"key" : key, "username" : username, "id" : user_id}
-        response=requests.post(db_url+db_add_user_endpoint, data=json.dumps(payload), headers=headers_db)
-        
-        bot.reply_to(message, f"Вы успешно авторизованы! {response.text}")
-    else:
-        bot.reply_to(message, f"Не получил значение 'key'.")
+    message_text=message_text.split(' ')
+    key=message_text[1]
+    
+    # Отправка ответа пользователю (по желанию)
+    payload={"key" : key, "username" : username, "id" : user_id}
+    response=requests.post(db_url+db_add_user_endpoint, data=json.dumps(payload), headers=headers_db)
+    if (response.text):
+        response_text = json.dumps(response.text)
+        if (response_text.error and response_text.error_msg): 
+            bot.reply_to(message, f"Произошла ошибка авторизации. {response_text.error_msg}")
+        else:
+            bot.reply_to(message, "Вы успешно авторизованы!") 
+    else: 
+        bot.reply_to(message, "Ошибка запроса к серверу")    
+   
 
 # Обработка текстовых сообщений
 @bot.message_handler(func=lambda message: True)
