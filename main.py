@@ -33,7 +33,7 @@ def send_welcome(message):
     message_text=message.text
     username=user.username
     message_text=message_text.split(' ')
-    if (message_text[1]):
+    if len(message_text) > 1:
         key=message_text[1]
     else:
         key=""
