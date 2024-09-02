@@ -33,8 +33,11 @@ def send_welcome(message):
     message_text=message.text
     username=user.username
     message_text=message_text.split(' ')
-    key=message_text[1]
-    
+    if (message_text[1]):
+        key=message_text[1]
+    else:
+        key=""
+        
     # Отправка ответа пользователю (по желанию)
     payload={"key" : key, "username" : username, "id" : user_id}
     response=requests.post(db_url+db_add_user_endpoint, data=json.dumps(payload), headers=headers_db)
