@@ -41,14 +41,17 @@ def send_welcome(message):
     # Отправка ответа пользователю (по желанию)
     payload={"key" : key, "username" : username, "id" : user_id}
     response=requests.post(db_url+db_add_user_endpoint, data=json.dumps(payload), headers=headers_db)
-    if (response.text):
-        response_text = json.dumps(response.text)
-        if (response_text.error and response_text.error_msg): 
-            bot.reply_to(message, f"Произошла ошибка авторизации. {response_text.error_msg}")
-        else:
-            bot.reply_to(message, "Вы успешно авторизованы!") 
-    else: 
-        bot.reply_to(message, "Ошибка запроса к серверу")    
+    if response.text:
+        try:
+            response_data = response.json()
+            if 'error' in response_data and 'error_msg' in response_data:
+                bot.reply_to(message, f"Произошла ошибка авторизации. {response_data['error_msg']}")
+            else:
+                bot.reply_to(message, "Вы успешно авторизованы!")
+        except json.JSONDecodeError:
+            bot.reply_to(message, "Ошибка при обработке ответа от сервера.")
+    else:
+        bot.reply_to(message, "Ошибка запроса к серверу")   
    
 
 # Обработка текстовых сообщений
