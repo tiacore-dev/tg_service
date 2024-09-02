@@ -61,8 +61,15 @@ def sent_message(message):
     user_id=str(user.id)
     payload={"userid" : user_id, "text" : message.text}
     response=requests.post(db_url+db_sent_message_endpoint,data=json.dumps(payload), headers=headers_db)
-    bot.reply_to(message, f"{response.text}")
-
+    if response.text:
+        try:
+            response_data = response.json()
+            if 'error' in response_data and 'error_msg' in response_data:
+                bot.reply_to(message, f"Произошла ошибка при отправке сообщения. {response_data['error_msg']}")
+        except json.JSONDecodeError:
+            bot.reply_to(message, "Ошибка при обработке ответа от сервера.")
+    else:
+        bot.reply_to(message, "Ошибка запроса к серверу")  
 
 # Flask маршруты
 @app.route('/')
