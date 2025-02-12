@@ -22,7 +22,8 @@ async def show_keyboard(message: types.Message):
     from keyboard import run_chats, get_main_keyboard
     user_id = message.from_user.id
     if user_id not in run_chats:
-        logger.warning("Not authorized user trying to get keyboard")
+        logger.warning(
+            f"Not authorized user trying to get keyboard: {user_id}")
         return
     logger.info(f"Пользователь {user_id} вызвал клавиатуру")
     await message.answer("Выберите опцию:", reply_markup=get_main_keyboard())
