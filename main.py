@@ -2,6 +2,7 @@ import os
 import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
+from aiogram.types import BotCommand
 from dotenv import load_dotenv
 from handlers import router  # Импортируем router из handlers
 from logger import logger
@@ -32,10 +33,19 @@ async def start_web_server():
     await site.start()
 
 
+async def set_bot_commands(bot: Bot):
+    commands = [
+        BotCommand(command="/start", description="Запустить бота"),
+        BotCommand(command="/keyboard", description="Показать клавиатуру"),
+        BotCommand(command="/remove_keyboard",
+                   description="Скрыть клавиатуру"),
+    ]
+    await bot.set_my_commands(commands)
+
+
 async def main():
     logger.info('Бот запущен')
-    await bot.delete_webhook(drop_pending_updates=True)  # Удаляем Webhook
-    logger.info('Webhook удален, запускаем Polling...')
+    await set_bot_commands(bot)  # Добавляем команды в Telegram
     await asyncio.gather(
         start_web_server(),  # Запуск веб-сервера
         dp.start_polling(bot)  # Запуск бота
