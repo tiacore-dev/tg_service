@@ -33,7 +33,7 @@ async def start_web_server():
     await site.start()
 
 
-async def set_bot_commands(bot: Bot):
+async def set_bot_commands():
     commands = [
         BotCommand(command="/start", description="Запустить бота"),
         BotCommand(command="/keyboard", description="Показать клавиатуру"),

@@ -14,7 +14,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 run_chats = os.getenv("ROUTER_CHATS").split(",")
-
+logger.info(f"оступные пользователи: {run_chats}")
 # ✅ Отображаем клавиатуру при команде /keyboard
 
 
