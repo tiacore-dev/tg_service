@@ -2,9 +2,10 @@ import logging
 import os
 from dotenv import load_dotenv
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardRemove
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
-from aiogram import Bot
+from aiogram import Bot, F
 from request import set_late
 from handlers import router
 
@@ -18,7 +19,25 @@ logger.info(f"оступные пользователи: {run_chats}")
 # ✅ Отображаем клавиатуру при команде /keyboard
 
 
+@router.message(F.text == "/keyboard")
+async def show_keyboard(message: types.Message):
+    user_id = message.from_user.id
+    if str(user_id) not in run_chats:
+        logger.warning(
+            f"Not authorized user trying to get keyboard: {user_id}")
+        return
+    logger.info(f"Пользователь {user_id} вызвал клавиатуру")
+    await message.answer("Выберите опцию:", reply_markup=get_main_keyboard())
+
+
+@router.message(F.text == "/remove_keyboard")
+async def remove_keyboard(message: types.Message):
+    logger.info(f"Пользователь {message.from_user.id} скрыл клавиатуру")
+    await message.answer("Клавиатура скрыта!", reply_markup=ReplyKeyboardRemove())
+
 # Создаём клавиатуру
+
+
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
