@@ -41,26 +41,31 @@ def send_welcome(message):
     message_text = message.text
     username = user.username
     message_text = message_text.split(' ')
-    
+
     if len(message_text) > 1:
         key = message_text[1]
     else:
         key = ""
 
-    logging.info(f'User {username} (ID: {user_id}) started the bot with key: {key}')
-    
+    logging.info(
+        f'User {username} (ID: {user_id}) started the bot with key: {key}')
+
     payload = {"key": key, "username": username, "id": user_id}
-    response = requests.post(db_url + db_add_user_endpoint, data=json.dumps(payload), headers=headers_db)
-    
+    response = requests.post(
+        db_url + db_add_user_endpoint, data=json.dumps(payload), headers=headers_db)
+
     if response.text:
         try:
             response_data = response.json()
             if 'error' in response_data and 'error_msg' in response_data:
-                bot.reply_to(message, f"Произошла ошибка авторизации. {response_data['error_msg']}")
-                logging.error(f'Authorization error for user {username}: {response_data["error_msg"]}')
+                bot.reply_to(
+                    message, f"Произошла ошибка авторизации. {response_data['error_msg']}")
+                logging.error(
+                    f'Authorization error for user {username}: {response_data["error_msg"]}')
             else:
                 bot.reply_to(message, "Вы успешно авторизованы!")
-                logging.info(f'User {username} (ID: {user_id}) authorized successfully.')
+                logging.info(
+                    f'User {username} (ID: {user_id}) authorized successfully.')
         except json.JSONDecodeError:
             bot.reply_to(message, "Ошибка при обработке ответа от сервера.")
             logging.error('JSON decode error in authorization response.')
@@ -75,17 +80,20 @@ def sent_message(message):
     user = message.from_user.id
     user_id = str(user)
     payload = {"userid": user_id, "text": message.text}
-    
+
     logging.info(f'User ID: {user_id} sent a message: {message.text}')
-    
-    response = requests.post(db_url + db_sent_message_endpoint, data=json.dumps(payload), headers=headers_db)
-    
+
+    response = requests.post(
+        db_url + db_sent_message_endpoint, data=json.dumps(payload), headers=headers_db)
+
     if response.text:
         try:
             response_data = response.json()
             if 'error' in response_data and 'error_msg' in response_data:
-                bot.reply_to(message, f"Произошла ошибка при отправке сообщения. {response_data['error_msg']}")
-                logging.error(f'Message sending error for user {user_id}: {response_data["error_msg"]}')
+                bot.reply_to(
+                    message, f"Произошла ошибка при отправке сообщения. {response_data['error_msg']}")
+                logging.error(
+                    f'Message sending error for user {user_id}: {response_data["error_msg"]}')
         except json.JSONDecodeError:
             bot.reply_to(message, "Ошибка при обработке ответа от сервера.")
             logging.error('JSON decode error in message sending response.')
@@ -105,9 +113,9 @@ def post_request():
     json_data = request.json  # Получение данных из тела POST запроса
     data = {"chat_id": json_data['userid'], "text": json_data['text']}
     response = requests.post(url_tg, data=data, headers=headers_tg)
-    
+
     logging.info(f'Sent message to Telegram: {data}')
-    
+
     return response.json()
 
 
