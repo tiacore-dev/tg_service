@@ -65,7 +65,7 @@ async def send_welcome(message: types.Message):
 
 
 # Обработчик текстовых сообщений
-@router.message(F.content_type == 'text')()
+@router.message(F.content_type == 'text')
 async def sent_message(message: types.Message):
     user_id = str(message.from_user.id)
     payload = {"userid": user_id, "text": message.text}
