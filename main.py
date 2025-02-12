@@ -34,6 +34,8 @@ async def start_web_server():
 
 async def main():
     logger.info('Бот запущен')
+    await bot.delete_webhook(drop_pending_updates=True)  # Удаляем Webhook
+    logger.info('Webhook удален, запускаем Polling...')
     await asyncio.gather(
         start_web_server(),  # Запуск веб-сервера
         dp.start_polling(bot)  # Запуск бота
