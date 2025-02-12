@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram import types, F
+from aiogram import types
 from aiogram import Bot
 from request import set_late
 from handlers import router

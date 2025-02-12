@@ -4,7 +4,7 @@ import pytz
 from aiogram.types import ReplyKeyboardRemove
 from aiogram import Bot, Router, types, F
 from request import get_routes, send_request
-from keyboard import run_chats, get_main_keyboard
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -19,6 +19,7 @@ tz_novosibirsk = pytz.timezone('Asia/Novosibirsk')
 
 @router.message(F.text == "/keyboard")
 async def show_keyboard(message: types.Message):
+    from keyboard import run_chats, get_main_keyboard
     user_id = message.from_user.id
     if user_id not in run_chats:
         return
