@@ -45,7 +45,7 @@ async def set_bot_commands():
 
 async def main():
     logger.info('Бот запущен')
-    await set_bot_commands(bot)  # Добавляем команды в Telegram
+    await set_bot_commands()  # Добавляем команды в Telegram
     await asyncio.gather(
         start_web_server(),  # Запуск веб-сервера
         dp.start_polling(bot)  # Запуск бота
