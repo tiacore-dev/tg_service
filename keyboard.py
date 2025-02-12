@@ -1,7 +1,6 @@
 import logging
 import os
 from dotenv import load_dotenv
-from aiogram.types import ReplyKeyboardRemove
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types, F
@@ -17,21 +16,6 @@ logger = logging.getLogger(__name__)
 run_chats = os.getenv("ROUTER_CHATS").split(",")
 
 # ✅ Отображаем клавиатуру при команде /keyboard
-
-
-@router.message(F.text == "/keyboard")
-async def show_keyboard(message: types.Message):
-    user_id = message.from_user.id
-    if user_id not in run_chats:
-        return
-    logger.info(f"Пользователь {user_id} вызвал клавиатуру")
-    await message.answer("Выберите опцию:", reply_markup=get_main_keyboard())
-
-
-@router.message(F.text == "/remove_keyboard")
-async def remove_keyboard(message: types.Message):
-    logger.info(f"Пользователь {message.from_user.id} скрыл клавиатуру")
-    await message.answer("Клавиатура скрыта!", reply_markup=ReplyKeyboardRemove())
 
 
 # Создаём клавиатуру

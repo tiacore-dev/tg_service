@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 import pytz
+from aiogram.types import ReplyKeyboardRemove
 from aiogram import Bot, Router, types, F
 from request import get_routes, send_request
+from keyboard import run_chats, get_main_keyboard
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -13,6 +15,21 @@ router = Router()
 
 # Указываем часовой пояс Новосибирска
 tz_novosibirsk = pytz.timezone('Asia/Novosibirsk')
+
+
+@router.message(F.text == "/keyboard")
+async def show_keyboard(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in run_chats:
+        return
+    logger.info(f"Пользователь {user_id} вызвал клавиатуру")
+    await message.answer("Выберите опцию:", reply_markup=get_main_keyboard())
+
+
+@router.message(F.text == "/remove_keyboard")
+async def remove_keyboard(message: types.Message):
+    logger.info(f"Пользователь {message.from_user.id} скрыл клавиатуру")
+    await message.answer("Клавиатура скрыта!", reply_markup=ReplyKeyboardRemove())
 
 
 @router.message(F.text == "Список рейсов на сегодня")
