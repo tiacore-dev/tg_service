@@ -5,6 +5,9 @@ from aiogram import Bot, Router, types, F
 from request import get_routes, send_request
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 # Создаем роутер для регистрации хендлеров
 router = Router()
 
@@ -16,30 +19,38 @@ tz_novosibirsk = pytz.timezone('Asia/Novosibirsk')
 async def handle_button1(message: types.Message, bot: Bot):
     from keyboard import send_routes
     user_id = message.chat.id
-    logger.info(
-        f"Пользователь {user_id} нажал 'Список рейсов на сегодня'")
-    # Получаем текущую дату и время в Новосибирске
+    logger.info(f"Пользователь {user_id} нажал 'Список рейсов на сегодня'")
+
     now = datetime.now(tz_novosibirsk)
-    # Получаем дату в формате "ДД-ММ-ГГГГ"
     today = now.strftime("%Y-%m-%d")
+    logger.info(f"Текущая дата (Новосибирск): {today}")
+
     routes = await get_routes(today)
+    logger.info(f"Получены маршруты на сегодня: {routes}")
+
     await send_routes(user_id, routes, bot)
+    logger.info(f"Отправлены маршруты пользователю {user_id}")
 
 
 @router.message(F.text == "Список рейсов на вчера")
 async def handle_button2(message: types.Message, bot: Bot):
     from keyboard import send_routes
     user_id = message.chat.id
-    logger.info(
-        f"Пользователь {user_id} нажал 'Список рейсов на вчера'")
-    # Получаем вчерашнюю дату
+    logger.info(f"Пользователь {user_id} нажал 'Список рейсов на вчера'")
+
     now = datetime.now(tz_novosibirsk)
     yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
-    routes = await get_routes(yesterday)
-    await send_routes(user_id, routes, bot)
+    logger.info(f"Дата вчерашнего дня (Новосибирск): {yesterday}")
 
+    routes = await get_routes(yesterday)
+    logger.info(f"Получены маршруты на вчера: {routes}")
+
+    await send_routes(user_id, routes, bot)
+    logger.info(f"Отправлены маршруты пользователю {user_id}")
 
 # Обработчик команды /start
+
+
 @router.message(F.text == "/start")
 async def send_welcome(message: types.Message):
     user = message.from_user
@@ -53,6 +64,7 @@ async def send_welcome(message: types.Message):
 
     payload = {"key": key, "username": username, "id": user_id}
     response_data = await send_request("add_user", payload)
+    logger.info(f"Ответ от сервера авторизации: {response_data}")
 
     if 'error' in response_data and 'error_msg' in response_data:
         await message.answer(f"Ошибка авторизации: {response_data['error_msg']}")
@@ -63,8 +75,9 @@ async def send_welcome(message: types.Message):
         logger.info(
             f'User {username} (ID: {user_id}) authorized successfully.')
 
-
 # Обработчик текстовых сообщений
+
+
 @router.message(F.content_type == 'text')
 async def sent_message(message: types.Message):
     user_id = str(message.from_user.id)
@@ -72,6 +85,8 @@ async def sent_message(message: types.Message):
     logger.info(f'User ID: {user_id} sent a message: {message.text}')
 
     response_data = await send_request("send_message", payload)
+    logger.info(f"Ответ от сервера отправки сообщений: {response_data}")
+
     if 'error' in response_data and 'error_msg' in response_data:
         await message.answer(f"Ошибка отправки сообщения: {response_data['error_msg']}")
         logger.error(

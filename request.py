@@ -2,7 +2,6 @@ import os
 import logging
 import json
 import aiohttp
-from aiohttp import ClientSession
 from dotenv import load_dotenv
 
 
@@ -86,15 +85,29 @@ async def set_late(number):
 
 
 async def send_request(text, payload):
-    """Отправка POST-запросов"""
-    async with ClientSession() as session:
-        if text == 'add_user':
-            url = db_url+db_add_user_endpoint
-        elif text == 'send_message':
-            url = db_url+db_sent_message_endpoint
-        else:
-            logger.error("No url provided")
+    if text == "add_user":
+        url = db_url+db_add_user_endpoint
+    elif text == "send_message":
+        url = db_url+db_sent_message_endpoint
+    else:
+        logger.error("No url provided")
+        return
+
+    headers = {"Content-Type": "application/json"}  # Указываем заголовки
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(url, json=payload, headers=headers) as response:
+                logger.info(f"Запрос {text} -> Статус: {response.status}")
+
+                # Проверяем Content-Type перед обработкой JSON
+                content_type = response.headers.get("Content-Type", "")
+                if "application/json" in content_type:
+                    return await response.json()
+                else:
+                    text_response = await response.text()  # Читаем ответ как текст
+                    logger.error(
+                        f"Ошибка: Ожидался JSON, но получен другой тип. Ответ: {text_response}")
+                    return {"error": "Invalid response", "status": response.status, "response": text_response}
+        except Exception as e:
+            logger.error(f"Error during sending request: {e}")
             return
-        headers = {'Content-Type': 'application/json'}
-        async with session.post(url, data=json.dumps(payload), headers=headers) as response:
-            return await response.json()
