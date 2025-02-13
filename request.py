@@ -136,7 +136,7 @@ async def send_request(text, payload):
             async with session.post(url, json=payload, headers=headers) as response:
                 logger.info(f"Запрос {text} -> Статус: {response.status}")
 
-                return await response.textn()
+                return await response.text()
 
         except Exception as e:
             logger.error(f"Error during sending request: {e}")
