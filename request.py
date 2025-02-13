@@ -132,6 +132,7 @@ async def send_request(text, payload):
     headers = {"Content-Type": "application/json"}  # Указываем заголовки
     async with aiohttp.ClientSession() as session:
         try:
+            logger.info(f"Отправляетмые данные: {payload}")
             async with session.post(url, json=payload, headers=headers) as response:
                 logger.info(f"Запрос {text} -> Статус: {response.status}")
 
