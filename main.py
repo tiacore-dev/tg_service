@@ -4,7 +4,8 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from dotenv import load_dotenv
-from handlers import router  # Импортируем router из handlers
+from handlers import router_main  # Импортируем router из handlers
+from keyboard import router_keyboard
 from logger import logger
 from web_app import handle_post_request
 
@@ -17,7 +18,8 @@ port = os.getenv('PORT')
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 # Регистрируем router с хендлерами
-dp.include_router(router)
+dp.include_router(router_keyboard)
+dp.include_router(router_main)
 
 # Flask-like сервер на Aiohttp
 app = web.Application()

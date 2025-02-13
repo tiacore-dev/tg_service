@@ -5,21 +5,22 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
-from aiogram import Bot, F
+from aiogram import Bot, F, Router
 from request import set_late
-from handlers import router
 
 load_dotenv()
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
 
+router_keyboard = Router()
+
 run_chats = os.getenv("ROUTER_CHATS").split(",")
 logger.info(f"оступные пользователи: {run_chats}")
 # ✅ Отображаем клавиатуру при команде /keyboard
 
 
-@router.message(F.text == "/keyboard")
+@router_keyboard.message(F.text == "/keyboard")
 async def show_keyboard(message: types.Message):
     user_id = message.from_user.id
     if str(user_id) not in run_chats:
@@ -30,7 +31,7 @@ async def show_keyboard(message: types.Message):
     await message.answer("Выберите опцию:", reply_markup=get_main_keyboard())
 
 
-@router.message(F.text == "/remove_keyboard")
+@router_keyboard.message(F.text == "/remove_keyboard")
 async def remove_keyboard(message: types.Message):
     logger.info(f"Пользователь {message.from_user.id} скрыл клавиатуру")
     await message.answer("Клавиатура скрыта!", reply_markup=ReplyKeyboardRemove())
@@ -76,7 +77,7 @@ async def send_routes(user_id, routes, bot: Bot):
         )
 
 
-@router.callback_query()
+@router_keyboard.callback_query()
 async def debug_callback(call: types.CallbackQuery):
     logger.info(f"🔄 Получен callback: {call.data}")
     await call.answer("Callback получен")
@@ -84,7 +85,7 @@ async def debug_callback(call: types.CallbackQuery):
 
 # Обработчик callback-кнопок
 
-@router.callback_query(lambda call: call.data.split(':')[0] in ["details", "late"])
+@router_keyboard.callback_query(lambda call: call.data.split(':')[0] in ["details", "late"])
 async def handle_inline_button(call: types.CallbackQuery):
     user_id = call.message.chat.id
     action, number = call.data.split(':')  # Убрали text из callback_data
@@ -120,7 +121,7 @@ async def handle_inline_button(call: types.CallbackQuery):
 
 
 # Обработчик callback-кнопок
-@router.callback_query(lambda call: call.data.split(':')[0] in ["yes", "no"])
+@router_keyboard.callback_query(lambda call: call.data.split(':')[0] in ["yes", "no"])
 async def handle_yes_no_button(call: types.CallbackQuery):
     user_id = call.message.chat.id
     action, number = call.data.split(':')

@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 import pytz
-
 from aiogram import Bot, Router, types, F
 from request import get_routes, send_request
 
@@ -11,13 +10,13 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Создаем роутер для регистрации хендлеров
-router = Router()
+router_main = Router()
 
 # Указываем часовой пояс Новосибирска
 tz_novosibirsk = pytz.timezone('Asia/Novosibirsk')
 
 
-@router.message(F.text == "Список рейсов на сегодня")
+@router_main.message(F.text == "Список рейсов на сегодня")
 async def handle_button1(message: types.Message, bot: Bot):
     from keyboard import send_routes
     user_id = message.chat.id
@@ -34,7 +33,7 @@ async def handle_button1(message: types.Message, bot: Bot):
     logger.info(f"Отправлены маршруты пользователю {user_id}")
 
 
-@router.message(F.text == "Список рейсов на вчера")
+@router_main.message(F.text == "Список рейсов на вчера")
 async def handle_button2(message: types.Message, bot: Bot):
     from keyboard import send_routes
     user_id = message.chat.id
@@ -53,7 +52,7 @@ async def handle_button2(message: types.Message, bot: Bot):
 # Обработчик команды /start
 
 
-@router.message(F.text == "/start")
+@router_main.message(F.text == "/start")
 async def send_welcome(message: types.Message):
     user = message.from_user
     user_id = user.id
@@ -80,7 +79,7 @@ async def send_welcome(message: types.Message):
 # Обработчик текстовых сообщений
 
 
-@router.message(F.content_type == 'text')
+@router_main.message(F.content_type == 'text')
 async def sent_message(message: types.Message):
     user_id = str(message.from_user.id)
     payload = {"userid": user_id, "text": message.text}
