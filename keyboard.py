@@ -6,7 +6,7 @@ from aiogram.types import ReplyKeyboardRemove
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
 from aiogram import Bot, F, Router
-from request import set_late
+from request import set_late, get_details
 
 load_dotenv()
 
@@ -88,8 +88,9 @@ async def handle_inline_button(call: types.CallbackQuery):
 
     try:
         if action == "details":
+            text = str(get_details(number))
             await call.message.edit_text(
-                text=f"Детали номера: {number}",
+                text=text,
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                     [InlineKeyboardButton(
                         text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
