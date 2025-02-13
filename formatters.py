@@ -31,7 +31,7 @@ def format_parcels(data):
             del_type = format_delivery_type(parcel['delType'])
 
             formatted_text += (
-                f"{idx}️⃣ `{number}`\n"
+                f"{idx}. Номер: {number}\n"
                 f"🏢 *{customer}*\n"
                 f"🚪 *Тип доставки:* {del_type}\n\n"
             )
