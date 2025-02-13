@@ -99,11 +99,11 @@ async def get_details(number):
                 logger.info(
                     f"Статус: {response.status}")
                 if response.status == 200:
-                    text_response = await response.text()  # Получаем текст
-                    logger.info(f"Полученный ответ: {response}")
+                    text_response = await response.content()  # Получаем текст
+                    logger.info(f"Полученный ответ: {text_response}")
                     try:
                         # Пробуем преобразовать в JSON
-                        return json.loads(response)
+                        return json.loads(text_response)
                     except json.JSONDecodeError as json_error:
                         logger.error(
                             f"Ошибка при декодировании JSON: {json_error}")
