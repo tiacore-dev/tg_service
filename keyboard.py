@@ -7,6 +7,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
 from aiogram import Bot, F, Router
 from request import set_late, get_details
+from formatters import format_route_info, format_parcels
 
 load_dotenv()
 
@@ -51,15 +52,6 @@ def get_main_keyboard():
     return keyboard
 
 
-def format_route_info(data: dict) -> str:
-    return (
-        f"*🚍 Номер рейса:* `{data['number']}`\n"
-        f"*📍 Маршрут:* {data['name']}\n"
-        f"*👤 Водитель:* {data['user']}\n"
-        f"*🚗 Авто:* {data['auto']}"
-    )
-
-
 async def send_routes(user_id, routes, bot: Bot):
     for route in routes:
         text = format_route_info(route)
@@ -90,7 +82,7 @@ async def handle_inline_button(call: types.CallbackQuery):
         if action == "details":
             text = await get_details(number)
             await call.message.edit_text(
-                text=str(text),
+                text=format_parcels(text),
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                     [InlineKeyboardButton(
                         text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
