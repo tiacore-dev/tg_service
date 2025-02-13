@@ -88,7 +88,7 @@ async def handle_inline_button(call: types.CallbackQuery):
 
     try:
         if action == "details":
-            text = str(get_details(number))
+            text = await str(get_details(number))
             await call.message.edit_text(
                 text=text,
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
