@@ -28,11 +28,20 @@ app.router.add_post('/sent-message/', handle_post_request)
 
 
 async def start_web_server():
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    logger.info(f"Запуск веб-сервера на порту {port}")
-    await site.start()
+    logger.info(f"🔍 Проверка переменной PORT: {port}")
+
+    if not port:
+        logger.error("❌ PORT не установлен! Укажите порт в .env")
+        return
+
+    try:
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, "0.0.0.0", int(port))  # Приводим к `int`
+        logger.info(f"🚀 Запуск веб-сервера на порту {port}")
+        await site.start()
+    except Exception as e:
+        logger.error(f"❌ Ошибка запуска сервера: {e}")
 
 
 async def set_bot_commands():

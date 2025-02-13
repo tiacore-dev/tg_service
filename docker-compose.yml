@@ -4,6 +4,9 @@ services:
     build: .
     volumes:
       - .:/app  # Монтируем текущую директорию в контейнер
+    ports:
+      - "${PORT}:${PORT}"  # Пробрасываем порт наружу
     environment:
       - TG_API_TOKEN=${TG_API_TOKEN}  # Устанавливаем переменные окружения
+      - PORT=${PORT}
     restart: unless-stopped
