@@ -21,7 +21,7 @@ logger.info(f"оступные пользователи: {run_chats}")
 # ✅ Отображаем клавиатуру при команде /keyboard
 
 
-@router_keyboard.message(F.text == "/keyboard")
+@router_keyboard.message(F.command("keyboard"))
 async def show_keyboard(message: types.Message):
     user_id = message.from_user.id
     if str(user_id) not in run_chats:
@@ -32,7 +32,7 @@ async def show_keyboard(message: types.Message):
     await message.answer("Выберите опцию:", reply_markup=get_main_keyboard())
 
 
-@router_keyboard.message(F.text == "/remove_keyboard")
+@router_keyboard.message(F.command("remove_keyboard"))
 async def remove_keyboard(message: types.Message):
     logger.info(f"Пользователь {message.from_user.id} скрыл клавиатуру")
     await message.answer("Клавиатура скрыта!", reply_markup=ReplyKeyboardRemove())
