@@ -29,7 +29,7 @@ async def start_web_server():
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', port)
-    logger.info("Запуск веб-сервера на порту 5010")
+    logger.info(f"Запуск веб-сервера на порту {port}")
     await site.start()
 
 
