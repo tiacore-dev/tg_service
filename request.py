@@ -101,7 +101,7 @@ async def get_details(number):
                 if response.status == 200:
                     text_response = await response.text()  # Получаем текст
                     logger.info(
-                        f"Полученный ответ: {response}. Текс: {text_response}")
+                        f"Полученный ответ: {text_response}")
 
                     try:
                         # Пробуем преобразовать в JSON
