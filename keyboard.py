@@ -85,13 +85,13 @@ async def handle_inline_button(call: types.CallbackQuery):
                 text = "❌ Детали отсутствуют"
             else:
                 text = format_parcels(details)
-                await call.message.edit_text(
-                    text=text,
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                        [InlineKeyboardButton(
-                            text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
-                    ])
-                )
+            await call.message.edit_text(
+                text=text,
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(
+                        text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
+                ])
+            )
 
         elif action == "late":
             await call.message.edit_text(
