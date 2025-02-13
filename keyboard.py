@@ -80,17 +80,18 @@ async def handle_inline_button(call: types.CallbackQuery):
 
     try:
         if action == "details":
-            text = await get_details(number)
-            text = format_parcels(text)
-            if text == []:
-                text = "Детали отсутствуют"
-            await call.message.edit_text(
-                text=text,
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(
-                        text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
-                ])
-            )
+            details = await get_details(number)
+            if not details:  # Если сервер вернул `[]` или `None`
+                text = "❌ Детали отсутствуют"
+            else:
+                text = format_parcels(details)
+                await call.message.edit_text(
+                    text=text,
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(
+                            text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
+                    ])
+                )
 
         elif action == "late":
             await call.message.edit_text(
