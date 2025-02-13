@@ -135,15 +135,8 @@ async def send_request(text, payload):
             async with session.post(url, json=payload, headers=headers) as response:
                 logger.info(f"Запрос {text} -> Статус: {response.status}")
 
-                # Проверяем Content-Type перед обработкой JSON
-                content_type = response.headers.get("Content-Type", "")
-                if "application/json" in content_type:
-                    return await response.json()
-                else:
-                    text_response = await response.text()  # Читаем ответ как текст
-                    logger.error(
-                        f"Ошибка: Ожидался JSON, но получен другой тип. Ответ: {text_response}")
-                    return {"error": "Invalid response", "status": response.status, "response": text_response}
+                return await response.textn()
+
         except Exception as e:
             logger.error(f"Error during sending request: {e}")
             return
