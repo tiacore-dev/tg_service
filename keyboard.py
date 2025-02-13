@@ -88,9 +88,9 @@ async def handle_inline_button(call: types.CallbackQuery):
 
     try:
         if action == "details":
-            text = await str(get_details(number))
+            text = await get_details(number)
             await call.message.edit_text(
-                text=text,
+                text=str(text),
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                     [InlineKeyboardButton(
                         text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
