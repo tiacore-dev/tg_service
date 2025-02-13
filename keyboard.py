@@ -120,7 +120,7 @@ async def handle_inline_button(call: types.CallbackQuery):
 
 
 # Обработчик callback-кнопок
-@router.callback_query(lambda call: call.data.split(':')[0] in ["yes", "no", "back"])
+@router.callback_query(lambda call: call.data.split(':')[0] in ["yes", "no"])
 async def handle_yes_no_button(call: types.CallbackQuery):
     user_id = call.message.chat.id
     action, number = call.data.split(':')

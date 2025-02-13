@@ -12,7 +12,7 @@ from web_app import handle_post_request
 # Загрузить переменные окружения
 load_dotenv()
 API_TOKEN = os.getenv('TG_API_TOKEN')
-
+port = os.getenv('PORT')
 # Создаем объекты бота и диспетчера
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -28,7 +28,7 @@ app.router.add_post('/sent-message/', handle_post_request)
 async def start_web_server():
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 5010)
+    site = web.TCPSite(runner, '0.0.0.0', port)
     logger.info("Запуск веб-сервера на порту 5010")
     await site.start()
 
