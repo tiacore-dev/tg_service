@@ -77,12 +77,6 @@ async def send_routes(user_id, routes, bot: Bot):
         )
 
 
-@router_keyboard.callback_query()
-async def debug_callback(call: types.CallbackQuery):
-    logger.info(f"🔄 Получен callback: {call.data}")
-    await call.answer("Callback получен")
-
-
 # Обработчик callback-кнопок
 
 @router_keyboard.callback_query(lambda call: call.data.split(':')[0] in ["details", "late"])
