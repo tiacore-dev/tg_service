@@ -6,9 +6,8 @@ def format_route_info(data: dict) -> str:
         f"*🚗 Авто:* {data['auto']}"
     )
 
+
 # Функция форматирования информации о посылках
-
-
 def format_parcels(data):
     formatted_text = ""
 
@@ -17,22 +16,27 @@ def format_parcels(data):
         rec_city = route['recCity']
         parcels = route['parcels']
 
-        # Заголовок блока
-        formatted_text += f"\n📦 *Отправка:* {send_city} → {rec_city}\n"
+        # Заголовок блока с отступом
+        formatted_text += f"\n📦 *Отправка:* {send_city} → {rec_city}\n\n"
 
         if not parcels:
-            formatted_text += "_Нет посылок_\n"
+            formatted_text += "_Нет посылок_\n\n"
             continue
 
-        # Детали по каждой посылке
+        # Детали по каждой посылке с пустой строкой между
         for idx, parcel in enumerate(parcels, start=1):
             number = parcel['number']
             customer = parcel['customer']
-            del_type = parcel['delType']
+            # Используем форматирование типа доставки
+            del_type = format_delivery_type(parcel['delType'])
 
-            formatted_text += f"{idx}. `{number}` - {customer} {format_delivery_type(del_type)}\n"
+            formatted_text += (
+                f"{idx}️⃣ `{number}`\n"
+                f"🏢 *{customer}*\n"
+                f"🚪 *Тип доставки:* {del_type}\n\n"
+            )
 
-    return formatted_text
+    return formatted_text.strip()
 
 
 # Функция отображения типа доставки
@@ -43,4 +47,6 @@ def format_delivery_type(del_type):
         return "🏢 Склад-Склад"
     elif "Дверь-Склад" in del_type:
         return "🚪 Дверь-Склад"
-    return del_type
+    elif "Дверь-Дверь" in del_type:  # Добавили новый тип доставки
+        return "🏡 Дверь-Дверь"
+    return del_type  # Оставляем оригинальный текст, если нет совпадения

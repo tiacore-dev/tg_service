@@ -82,7 +82,7 @@ async def handle_inline_button(call: types.CallbackQuery):
         if action == "details":
             details = await get_details(number)
             if not details:  # Если сервер вернул `[]` или `None`
-                text = "❌ Детали отсутствуют"
+                text = "❌ Манифесты отсутствуют"
             else:
                 text = format_parcels(details)
             await call.message.edit_text(
