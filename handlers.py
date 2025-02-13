@@ -16,7 +16,7 @@ router_main = Router()
 tz_novosibirsk = pytz.timezone('Asia/Novosibirsk')
 
 
-@router_main.message(F.command("start"))
+@router_main.message(F.text.startswith("/start"))
 async def send_welcome(message: types.Message):
     user = message.from_user
     user_id = user.id
