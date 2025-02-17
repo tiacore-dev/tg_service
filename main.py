@@ -2,7 +2,7 @@ import os
 import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats
 from dotenv import load_dotenv
 from handlers import router_main  # Импортируем router из handlers
 from keyboard import router_keyboard
@@ -51,7 +51,7 @@ async def set_bot_commands():
         BotCommand(command="/remove_keyboard",
                    description="Скрыть клавиатуру"),
     ]
-    await bot.set_my_commands(commands)
+    await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
 
 
 async def main():
