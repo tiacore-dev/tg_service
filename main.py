@@ -45,6 +45,9 @@ async def start_web_server():
 
 
 async def set_bot_commands():
+    # Сбрасываем все команды перед установкой новых
+    await bot.set_my_commands([], scope=BotCommandScopeAllPrivateChats())
+
     # Основные команды для всех пользователей
     common_commands = [
         BotCommand(command="/start", description="Запустить бота"),
@@ -57,10 +60,10 @@ async def set_bot_commands():
                    description="Скрыть клавиатуру"),
     ]
 
-    # Устанавливаем команды для всех пользователей
+    # Устанавливаем базовые команды для всех пользователей
     await bot.set_my_commands(common_commands, scope=BotCommandScopeAllPrivateChats())
 
-    # Получаем список избранных чатов из переменной окружения
+    # Получаем список избранных чатов
     run_chats = os.getenv("ROUTER_CHATS").split(",")
 
     # Устанавливаем дополнительные команды для избранных пользователей
