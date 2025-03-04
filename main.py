@@ -2,7 +2,7 @@ import os
 import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
-from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats
+from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeChat
 from dotenv import load_dotenv
 from handlers import router_main  # Импортируем router из handlers
 from keyboard import router_keyboard
@@ -45,13 +45,27 @@ async def start_web_server():
 
 
 async def set_bot_commands():
-    commands = [
+    # Основные команды для всех пользователей
+    common_commands = [
         BotCommand(command="/start", description="Запустить бота"),
+    ]
+
+    # Команды только для избранных пользователей
+    special_commands = [
         BotCommand(command="/keyboard", description="Показать клавиатуру"),
         BotCommand(command="/remove_keyboard",
                    description="Скрыть клавиатуру"),
     ]
-    await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
+
+    # Устанавливаем команды для всех пользователей
+    await bot.set_my_commands(common_commands, scope=BotCommandScopeAllPrivateChats())
+
+    # Получаем список избранных чатов из переменной окружения
+    run_chats = os.getenv("ROUTER_CHATS").split(",")
+
+    # Устанавливаем дополнительные команды для избранных пользователей
+    for chat_id in run_chats:
+        await bot.set_my_commands(common_commands + special_commands, scope=BotCommandScopeChat(chat_id=int(chat_id)))
 
 
 async def main():
