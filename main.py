@@ -2,7 +2,13 @@ import os
 import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
-from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats, BotCommandScopeChat, BotCommandScopeDefault
+from aiogram.types import (
+    BotCommand,
+    BotCommandScopeDefault,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeAllGroupChats,
+    BotCommandScopeAllChatAdministrators,
+    BotCommandScopeChat)
 from dotenv import load_dotenv
 from handlers import router_main  # Импортируем router из handlers
 from keyboard import router_keyboard
@@ -46,7 +52,13 @@ async def start_web_server():
 
 async def set_bot_commands():
     # Сбрасываем все команды перед установкой новых
+    # Сброс по умолчанию
     await bot.set_my_commands([], scope=BotCommandScopeDefault())
+    # Сброс в приватных чатах
+    await bot.set_my_commands([], scope=BotCommandScopeAllPrivateChats())
+    # Сброс в группах
+    await bot.set_my_commands([], scope=BotCommandScopeAllGroupChats())
+    await bot.set_my_commands([], scope=BotCommandScopeAllChatAdministrators())
 
     # Основные команды для всех пользователей
     common_commands = [
