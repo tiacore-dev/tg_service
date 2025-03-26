@@ -8,7 +8,7 @@ from aiogram import types
 from aiogram import Bot, F, Router
 from request import set_late, get_details
 from formatters import format_route_info, format_route_page
-from utils import slugify, find_route_by_slug
+
 
 load_dotenv()
 
@@ -54,29 +54,38 @@ def get_main_keyboard():
     return keyboard
 
 
-def build_city_pagination_keyboard(number, send_slug, rec_slug):
+def build_city_pagination_keyboard(number, page, total_pages):
+    buttons = []
+
+    if page > 0:
+        buttons.append(InlineKeyboardButton(
+            text="⬅️ Назад", callback_data=f"details:{number}:{page - 1}"))
+    if page < total_pages - 1:
+        buttons.append(InlineKeyboardButton(
+            text="➡️ Вперёд", callback_data=f"details:{number}:{page + 1}"))
+
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="⚠️ Сообщить о задержке",
-                                  callback_data=f"late:{number}:{send_slug}:{rec_slug}")]
+            buttons,
+            [InlineKeyboardButton(
+                text="⚠️ Сообщить о задержке",
+                callback_data=f"late:{number}"
+            )]
         ]
     )
 
 
 async def send_routes(user_id, routes, bot: Bot):
     for route in routes:
-        number = route["number"]  # ← извлекаем прямо отсюда
-        send = slugify(route['sendCity'])
-        rec = slugify(route['recCity'])
-
-        text = format_route_info(route)
+        number = route["number"]
+        text = format_route_info(route)  # откуда name, user, auto
         await bot.send_message(
             user_id,
             text=text,
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [InlineKeyboardButton(
-                        text="📋 Детали", callback_data=f"details:{number}:{send}:{rec}")],
+                        text="📋 Детали", callback_data=f"details:{number}:0")],
                     [InlineKeyboardButton(
                         text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
                 ]
@@ -90,23 +99,34 @@ async def send_routes(user_id, routes, bot: Bot):
 @router_keyboard.callback_query(lambda call: call.data.startswith("details"))
 async def handle_details(call: types.CallbackQuery):
     try:
-        action, number, send_slug, rec_slug = call.data.split(":")
-        user_id = call.message.chat.id
-        logger.info(
-            f"Получен запрос от пользователя {user_id} для номера {number} с действием {action}.")
-        details = await get_details(number)
-        route = find_route_by_slug(details, send_slug, rec_slug)
+        parts = call.data.split(":")
+        if len(parts) != 3:
+            logger.warning(f"Некорректный callback_data: {call.data}")
+            await call.answer("⚠️ Неверный формат", show_alert=True)
+            return
 
-        if not route:
-            await call.message.edit_text("❌ Маршрут не найден")
+        _, number, page = parts
+        page = int(page)
+        user_id = call.message.chat.id
+
+        logger.info(
+            f"[details] Пользователь {user_id} открыл рейс {number}, стр. {page}")
+
+        details = await get_details(number)
+        if not details:
+            await call.message.edit_text("❌ Манифесты отсутствуют")
+            return
+
+        if page < 0 or page >= len(details):
+            await call.answer("📄 Страница вне диапазона", show_alert=True)
             return
 
         current_text = call.message.text or call.message.caption
-        new_text, _, modified = format_route_page([route], 0, current_text)
-        new_markup = build_city_pagination_keyboard(
-            number, send_slug, rec_slug)
+        text, total_pages, modified = format_route_page(
+            details, page, current_text)
+        keyboard = build_city_pagination_keyboard(number, page, total_pages)
 
-        markup_changed = dict(new_markup) != (
+        markup_changed = dict(keyboard) != (
             dict(call.message.reply_markup) if call.message.reply_markup else None)
 
         if not modified and not markup_changed:
@@ -114,8 +134,8 @@ async def handle_details(call: types.CallbackQuery):
             return
 
         await call.message.edit_text(
-            text=new_text,
-            reply_markup=new_markup,
+            text=text,
+            reply_markup=keyboard,
             parse_mode="Markdown"
         )
         await call.answer()
