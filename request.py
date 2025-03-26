@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("telegram_bot")
 
 
 url_routes = os.getenv('URL_ROUTES')

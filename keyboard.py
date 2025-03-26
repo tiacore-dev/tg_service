@@ -13,7 +13,7 @@ from formatters import format_route_info, format_route_page
 load_dotenv()
 
 # Настройка логирования
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("telegram_bot")
 
 router_keyboard = Router()
 

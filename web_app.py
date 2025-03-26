@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from aiohttp import web, ClientSession
 import aiohttp
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("telegram_bot")
 # Aiohttp маршрут для получения сообщений
 # Загрузить переменные окружения
 load_dotenv()
