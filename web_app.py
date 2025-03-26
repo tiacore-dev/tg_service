@@ -1,3 +1,5 @@
+from aiohttp import web, ClientSession, FormData
+from io import BytesIO
 import re
 import logging
 import os
@@ -49,80 +51,61 @@ async def debug_multipart_request(body_bytes, headers):
 
 async def handle_post_request(request):
     try:
-        # Читаем тело запроса один раз как байты
-        body_bytes = await request.read()
+        body = await request.read()
+        content_type = request.headers.get("Content-Type", "")
+        match = re.search(r'boundary=([-_a-zA-Z0-9]+)', content_type)
+        if not match:
+            return web.json_response({"error": "Boundary not found"}, status=400)
 
-        # logger.info(f"📥 Headers: {dict(request.headers)}")
-        # logger.info(f"📦 Content-Type: {request.content_type}")
-        # logger.info(f"🧱 Content-Length: {request.content_length}")
-        # logger.info(f"🧾 Charset: {request.charset}")
-        # logger.info(f"🧬 Raw body (first 1000 bytes): {body_bytes[:1000]!r}")
-        # await debug_multipart_request(body_bytes, request.headers)
-
-        # Подменяем тело запроса обратно, чтобы работал multipart()
-        request._read_bytes = body_bytes
-
-        reader = await request.multipart()
+        boundary = match.group(1).strip()
+        parts = body.split(f"--{boundary}".encode())
         chat_id = None
         text = ""
         files = []
 
-        while True:
-            part = await reader.next()
-            if part is None:
-                break
+        for part in parts:
+            if not part or part == b"--\r\n" or part == b"--":
+                continue
 
-            if part.name == "userid":
-                chat_id = await part.text()
-                logger.info(f"📨 Received chat_id: {chat_id}")
-            elif part.name == "text":
-                text = await part.text()
-                logger.info(
-                    f"📝 Received text: {text[:100]}{'...' if len(text) > 100 else ''}")
-            elif part.name == "attachments" and part.filename:
-                file_data = await part.read()
-                files.append({
-                    "filename": part.filename,
-                    "content": file_data
-                })
-                logger.info(
-                    f"📎 Received file: {part.filename} ({len(file_data)} bytes)")
+            headers_body_split = part.split(b"\r\n\r\n", 1)
+            if len(headers_body_split) != 2:
+                continue
+
+            headers_raw, content = headers_body_split
+            headers_text = headers_raw.decode(errors="ignore")
+
+            # Определяем тип данных
+            if 'name="userid"' in headers_text:
+                chat_id = content.strip().decode(errors="ignore")
+            elif 'name="text"' in headers_text:
+                text = content.strip().decode(errors="ignore")
+            elif 'filename="' in headers_text:
+                filename_match = re.search(r'filename="([^"]+)"', headers_text)
+                filename = filename_match.group(
+                    1) if filename_match else "unknown"
+                file_data = content.strip(b"\r\n")
+                files.append({"filename": filename, "content": file_data})
 
         if not chat_id:
-            logger.warning("⚠️ Missing chat_id (userid) in form-data")
             return web.json_response({"error": "Missing chat_id"}, status=400)
 
-        logger.info(
-            f"📦 Parsed request | chat_id: {chat_id} | files: {[f['filename'] for f in files]}")
-
         # Отправка текста
-        if text.strip():
-            msg_data = {"chat_id": chat_id, "text": text}
+        if text:
             async with ClientSession() as session:
-                async with session.post(
-                    f"https://api.telegram.org/bot{TG_API_TOKEN}/sendMessage", json=msg_data
-                ) as resp:
-                    msg_result = await resp.json()
-                    logger.info(f"✅ Telegram message sent: {msg_result}")
+                msg = {"chat_id": chat_id, "text": text}
+                async with session.post(f"https://api.telegram.org/bot{TG_API_TOKEN}/sendMessage", json=msg) as resp:
+                    await resp.json()
 
         # Отправка файлов
         if files:
             async with ClientSession() as session:
-                for file in files:
-                    form = aiohttp.FormData()
+                for f in files:
+                    form = FormData()
                     form.add_field("chat_id", chat_id)
-                    form.add_field(
-                        "document", file["content"], filename=file["filename"])
-
-                    logger.info(
-                        f"📤 Uploading file {file['filename']} to Telegram...")
-
-                    async with session.post(
-                        f"https://api.telegram.org/bot{TG_API_TOKEN}/sendDocument", data=form
-                    ) as resp:
-                        doc_result = await resp.json()
-                        logger.info(
-                            f"📎 File {file['filename']} sent: {doc_result}")
+                    form.add_field("document", BytesIO(
+                        f["content"]), filename=f["filename"])
+                    async with session.post(f"https://api.telegram.org/bot{TG_API_TOKEN}/sendDocument", data=form) as resp:
+                        await resp.json()
 
         return web.json_response({"status": "ok"})
 
