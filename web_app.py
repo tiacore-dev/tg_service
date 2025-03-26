@@ -57,7 +57,8 @@ async def handle_post_request(request):
         logger.info(f"🧱 Content-Length: {request.content_length}")
         logger.info(f"🧾 Charset: {request.charset}")
         logger.info(f"🧬 Raw body (first 1000 bytes): {body_bytes[:1000]!r}")
-        await debug_multipart_request(request, body_bytes)
+        await debug_multipart_request(body_bytes, request.headers)
+
         # Подменяем тело запроса обратно, чтобы работал multipart()
         request._read_bytes = body_bytes
 
