@@ -13,12 +13,23 @@ TG_API_TOKEN = os.getenv('TG_API_TOKEN')
 
 async def handle_post_request(request):
     try:
+        # Читаем тело запроса один раз как байты
+        body_bytes = await request.read()
+
+        logger.info(f"📥 Headers: {dict(request.headers)}")
+        logger.info(f"📦 Content-Type: {request.content_type}")
+        logger.info(f"🧱 Content-Length: {request.content_length}")
+        logger.info(f"🧾 Charset: {request.charset}")
+        logger.info(f"🧬 Raw body (first 1000 bytes): {body_bytes[:1000]!r}")
+
+        # Подменяем тело запроса обратно, чтобы работал multipart()
+        request._read_bytes = body_bytes
+
         reader = await request.multipart()
         chat_id = None
         text = ""
         files = []
 
-        # Читаем части формы
         while True:
             part = await reader.next()
             if part is None:
