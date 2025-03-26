@@ -28,7 +28,7 @@ dp.include_router(router_keyboard)
 dp.include_router(router_main)
 
 # Flask-like сервер на Aiohttp
-app = web.Application()
+app = web.Application(client_max_size=200 * 1024 ** 2)
 
 app.router.add_post('/sent-message/', handle_post_request)
 
