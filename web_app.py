@@ -16,7 +16,7 @@ TG_API_TOKEN = os.getenv('TG_API_TOKEN')
 async def handle_post_request(request):
     json_data = await request.json()
     logger.info(f"📩 Incoming request data: {json_data}")
-    chat_id = json_data.get('userId')
+    chat_id = json_data.get('userid')
     text = json_data.get('text')
     attachments = json_data.get('attachments')
     if not text:
