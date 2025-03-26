@@ -1,3 +1,4 @@
+import re
 import logging
 import os
 from dotenv import load_dotenv
@@ -11,6 +12,41 @@ load_dotenv()
 TG_API_TOKEN = os.getenv('TG_API_TOKEN')
 
 
+async def debug_multipart_request(body_bytes, headers):
+
+    content_type = headers.get("Content-Type", "")
+    match = re.search(r'boundary=(.+)', content_type)
+    if not match:
+        logger.warning("⚠️ Boundary not found in Content-Type")
+        return
+
+    boundary = match.group(1).strip()
+    boundary_bytes = f"--{boundary}".encode()
+
+    logger.info(f"🧬 Parsed multipart structure with boundary: {boundary}")
+
+    parts = body_bytes.split(boundary_bytes)
+    logger.info(f"📦 Found {len(parts) - 2} part(s) + end delimiter")
+
+    for i, part in enumerate(parts):
+        part = part.strip(b"\r\n")
+        if not part or part == b"--":
+            continue
+
+        logger.info(f"\n📍 Part {i}")
+        lines = part.split(b"\r\n")
+        for line in lines[:10]:  # Логируем максимум 10 строк
+            try:
+                logger.info(f"🔹 {line.decode('utf-8')}")
+            except Exception:
+                logger.info(f"🔹 {line[:50]!r} (binary or undecodable)")
+
+        if len(lines) > 10:
+            logger.info("🔹 ...")
+
+    logger.info("✅ Multipart body analysis complete.")
+
+
 async def handle_post_request(request):
     try:
         # Читаем тело запроса один раз как байты
@@ -21,7 +57,7 @@ async def handle_post_request(request):
         logger.info(f"🧱 Content-Length: {request.content_length}")
         logger.info(f"🧾 Charset: {request.charset}")
         logger.info(f"🧬 Raw body (first 1000 bytes): {body_bytes[:1000]!r}")
-
+        await debug_multipart_request(request, body_bytes)
         # Подменяем тело запроса обратно, чтобы работал multipart()
         request._read_bytes = body_bytes
 
