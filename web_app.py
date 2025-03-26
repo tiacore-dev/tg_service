@@ -1,7 +1,5 @@
 import logging
 import os
-from io import BytesIO
-import base64
 from dotenv import load_dotenv
 from aiohttp import web, ClientSession
 import aiohttp
@@ -14,44 +12,61 @@ TG_API_TOKEN = os.getenv('TG_API_TOKEN')
 
 
 async def handle_post_request(request):
-    json_data = await request.json()
-    logger.info(f"📩 Incoming request data: {json_data}")
-    chat_id = json_data.get('userid')
-    text = json_data.get('text')
-    attachments = json_data.get('attachments')
-    if not text:
+    try:
+        reader = await request.multipart()
+        chat_id = None
         text = ""
-    data = {"chat_id": chat_id, "text": text}
-    logger.info(f"📝 Sending message to chat_id={chat_id}: {text}")
-    # Отправляем сначала текст
-    async with ClientSession() as session:
-        async with session.post(f'https://api.telegram.org/bot{TG_API_TOKEN}/sendMessage', json=data) as response:
-            result = await response.json()
-            logger.info(f"✅ Message response from Telegram: {result}")
-        if attachments:
-            for attachment in attachments:
-                file_name = attachment['fileName']
-                base64_data = attachment['base64Data']
-                if not file_name or not base64_data:
-                    logger.warning(
-                        "⚠️ Skipping attachment: missing fileName or base64Data")
-                    continue
-                try:
-                    file_bytes = base64.b64decode(base64_data)
-                    file_obj = BytesIO(file_bytes)
-                    file_obj.name = file_name
+        files = []
 
-                    send_doc_url = f"https://api.telegram.org/bot{TG_API_TOKEN}/sendDocument"
+        # Читаем части формы
+        while True:
+            part = await reader.next()
+            if part is None:
+                break
+
+            if part.name == "userid":
+                chat_id = await part.text()
+            elif part.name == "text":
+                text = await part.text()
+            elif part.name == "attachments" and part.filename:
+                file_data = await part.read()
+                files.append({
+                    "filename": part.filename,
+                    "content": file_data
+                })
+
+        if not chat_id:
+            return web.json_response({"error": "Missing chat_id"}, status=400)
+
+        logger.info(
+            f"📩 New request: chat_id={chat_id}, text={text}, files={[f['filename'] for f in files]}")
+
+        # Отправка текста
+        if text.strip():
+            msg_data = {"chat_id": chat_id, "text": text}
+            async with ClientSession() as session:
+                async with session.post(f"https://api.telegram.org/bot{TG_API_TOKEN}/sendMessage", json=msg_data) as resp:
+                    msg_result = await resp.json()
+                    logger.info(f"✅ Message sent: {msg_result}")
+
+        # Отправка файлов
+        if files:
+            async with ClientSession() as session:
+                for file in files:
                     form = aiohttp.FormData()
-                    form.add_field("chat_id", str(chat_id))
-                    form.add_field("document", file_obj, filename=file_name)
-                    logger.info(
-                        f"📤 Sending document {file_name} to Telegram...")
-                    async with session.post(send_doc_url, data=form) as resp:
-                        result = await resp.json()
-                        logger.info(
-                            f"📎 Sent file {file_name} to Telegram: {result}")
-                except Exception as e:
-                    logger.error(f"❌ Failed to send file {file_name}: {e}")
+                    form.add_field("chat_id", chat_id)
+                    form.add_field(
+                        "document", file["content"], filename=file["filename"])
 
-    return web.json_response({"status": "ok"})
+                    logger.info(f"📤 Sending file {file['filename']}...")
+
+                    async with session.post(f"https://api.telegram.org/bot{TG_API_TOKEN}/sendDocument", data=form) as resp:
+                        doc_result = await resp.json()
+                        logger.info(
+                            f"📎 File sent {file['filename']}: {doc_result}")
+
+        return web.json_response({"status": "ok"})
+
+    except Exception as e:
+        logger.exception(f"🔥 Error in handle_post_request: {e}")
+        return web.json_response({"error": "Internal server error"}, status=500)
