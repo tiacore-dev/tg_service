@@ -26,28 +26,36 @@ async def handle_post_request(request):
 
             if part.name == "userid":
                 chat_id = await part.text()
+                logger.info(f"📨 Received chat_id: {chat_id}")
             elif part.name == "text":
                 text = await part.text()
+                logger.info(
+                    f"📝 Received text: {text[:100]}{'...' if len(text) > 100 else ''}")
             elif part.name == "attachments" and part.filename:
                 file_data = await part.read()
                 files.append({
                     "filename": part.filename,
                     "content": file_data
                 })
+                logger.info(
+                    f"📎 Received file: {part.filename} ({len(file_data)} bytes)")
 
         if not chat_id:
+            logger.warning("⚠️ Missing chat_id (userid) in form-data")
             return web.json_response({"error": "Missing chat_id"}, status=400)
 
         logger.info(
-            f"📩 New request: chat_id={chat_id}, text={text}, files={[f['filename'] for f in files]}")
+            f"📦 Parsed request | chat_id: {chat_id} | files: {[f['filename'] for f in files]}")
 
         # Отправка текста
         if text.strip():
             msg_data = {"chat_id": chat_id, "text": text}
             async with ClientSession() as session:
-                async with session.post(f"https://api.telegram.org/bot{TG_API_TOKEN}/sendMessage", json=msg_data) as resp:
+                async with session.post(
+                    f"https://api.telegram.org/bot{TG_API_TOKEN}/sendMessage", json=msg_data
+                ) as resp:
                     msg_result = await resp.json()
-                    logger.info(f"✅ Message sent: {msg_result}")
+                    logger.info(f"✅ Telegram message sent: {msg_result}")
 
         # Отправка файлов
         if files:
@@ -58,12 +66,15 @@ async def handle_post_request(request):
                     form.add_field(
                         "document", file["content"], filename=file["filename"])
 
-                    logger.info(f"📤 Sending file {file['filename']}...")
+                    logger.info(
+                        f"📤 Uploading file {file['filename']} to Telegram...")
 
-                    async with session.post(f"https://api.telegram.org/bot{TG_API_TOKEN}/sendDocument", data=form) as resp:
+                    async with session.post(
+                        f"https://api.telegram.org/bot{TG_API_TOKEN}/sendDocument", data=form
+                    ) as resp:
                         doc_result = await resp.json()
                         logger.info(
-                            f"📎 File sent {file['filename']}: {doc_result}")
+                            f"📎 File {file['filename']} sent: {doc_result}")
 
         return web.json_response({"status": "ok"})
 
