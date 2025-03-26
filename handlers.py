@@ -43,8 +43,12 @@ async def send_welcome(message: types.Message):
 
 @router_main.message(F.text == "Список рейсов на сегодня")
 async def handle_button1(message: types.Message, bot: Bot):
-    from keyboard import send_routes
+    from keyboard import send_routes, run_chats
     user_id = message.chat.id
+    if str(user_id) not in run_chats:
+        logger.warning(
+            f"Not authorized user trying to use keyboard: {user_id}")
+        return
     logger.info(f"Пользователь {user_id} нажал 'Список рейсов на сегодня'")
 
     now = datetime.now(tz_novosibirsk)
@@ -60,8 +64,12 @@ async def handle_button1(message: types.Message, bot: Bot):
 
 @router_main.message(F.text == "Список рейсов на вчера")
 async def handle_button2(message: types.Message, bot: Bot):
-    from keyboard import send_routes
+    from keyboard import send_routes, run_chats
     user_id = message.chat.id
+    if str(user_id) not in run_chats:
+        logger.warning(
+            f"Not authorized user trying to use keyboard: {user_id}")
+        return
     logger.info(f"Пользователь {user_id} нажал 'Список рейсов на вчера'")
 
     now = datetime.now(tz_novosibirsk)

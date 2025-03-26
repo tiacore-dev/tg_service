@@ -7,7 +7,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import types
 from aiogram import Bot, F, Router
 from request import set_late, get_details
-from formatters import format_route_info, format_parcels
+from formatters import format_route_info, format_route_page
+from utils import slugify, find_route_by_slug
 
 load_dotenv()
 
@@ -16,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 router_keyboard = Router()
 
+
 run_chats = os.getenv("ROUTER_CHATS").split(",")
-logger.info(f"оступные пользователи: {run_chats}")
+logger.info(f"Доступные пользователи: {run_chats}")
 # ✅ Отображаем клавиатуру при команде /keyboard
 
 
@@ -52,8 +54,21 @@ def get_main_keyboard():
     return keyboard
 
 
+def build_city_pagination_keyboard(number, send_slug, rec_slug):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="⚠️ Сообщить о задержке",
+                                  callback_data=f"late:{number}:{send_slug}:{rec_slug}")]
+        ]
+    )
+
+
 async def send_routes(user_id, routes, bot: Bot):
     for route in routes:
+        number = route["number"]  # ← извлекаем прямо отсюда
+        send = slugify(route['sendCity'])
+        rec = slugify(route['recCity'])
+
         text = format_route_info(route)
         await bot.send_message(
             user_id,
@@ -61,9 +76,9 @@ async def send_routes(user_id, routes, bot: Bot):
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [InlineKeyboardButton(
-                        text="📋 Детали", callback_data=f"details:{route['number']}")],
+                        text="📋 Детали", callback_data=f"details:{number}:{send}:{rec}")],
                     [InlineKeyboardButton(
-                        text="⚠️ Сообщить о задержке", callback_data=f"late:{route['number']}")]
+                        text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
                 ]
             )
         )
@@ -71,39 +86,61 @@ async def send_routes(user_id, routes, bot: Bot):
 
 # Обработчик callback-кнопок
 
-@router_keyboard.callback_query(lambda call: call.data.split(':')[0] in ["details", "late"])
+
+@router_keyboard.callback_query(lambda call: call.data.startswith("details"))
+async def handle_details(call: types.CallbackQuery):
+    try:
+        action, number, send_slug, rec_slug = call.data.split(":")
+        user_id = call.message.chat.id
+        logger.info(
+            f"Получен запрос от пользователя {user_id} для номера {number} с действием {action}.")
+        details = await get_details(number)
+        route = find_route_by_slug(details, send_slug, rec_slug)
+
+        if not route:
+            await call.message.edit_text("❌ Маршрут не найден")
+            return
+
+        current_text = call.message.text or call.message.caption
+        new_text, _, modified = format_route_page([route], 0, current_text)
+        new_markup = build_city_pagination_keyboard(
+            number, send_slug, rec_slug)
+
+        markup_changed = dict(new_markup) != (
+            dict(call.message.reply_markup) if call.message.reply_markup else None)
+
+        if not modified and not markup_changed:
+            await call.answer("🔄 Уже на этой странице")
+            return
+
+        await call.message.edit_text(
+            text=new_text,
+            reply_markup=new_markup,
+            parse_mode="Markdown"
+        )
+        await call.answer()
+
+    except Exception as e:
+        logger.error(f"Ошибка при пагинации по городам: {e}")
+
+
+@router_keyboard.callback_query(lambda call: call.data.startswith("late"))
 async def handle_inline_button(call: types.CallbackQuery):
     user_id = call.message.chat.id
     action, number = call.data.split(':')  # Убрали text из callback_data
     logger.info(
         f"Получен запрос от пользователя {user_id} для номера {number} с действием {action}.")
-
     try:
-        if action == "details":
-            details = await get_details(number)
-            if not details:  # Если сервер вернул `[]` или `None`
-                text = "❌ Манифесты отсутствуют"
-            else:
-                text = format_parcels(details)
-            await call.message.edit_text(
-                text=text,
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(
-                        text="⚠️ Сообщить о задержке", callback_data=f"late:{number}")]
-                ])
-            )
 
-        elif action == "late":
-            await call.message.edit_text(
-                text=f"⚠️ Вы уверены, что хотите сообщить о задержке рейса {number}?",
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(
-                        text="✅ Да", callback_data=f"yes:{number}")],
-                    [InlineKeyboardButton(
-                        text="❌ Нет", callback_data=f"no:{number}")],
-                ])
-            )
-
+        await call.message.edit_text(
+            text=f"⚠️ Вы уверены, что хотите сообщить о задержке рейса {number}?",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(
+                    text="✅ Да", callback_data=f"yes:{number}")],
+                [InlineKeyboardButton(
+                    text="❌ Нет", callback_data=f"no:{number}")],
+            ])
+        )
         await call.answer()
 
     except Exception as e:
