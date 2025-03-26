@@ -52,11 +52,11 @@ async def handle_post_request(request):
         # Читаем тело запроса один раз как байты
         body_bytes = await request.read()
 
-        logger.info(f"📥 Headers: {dict(request.headers)}")
-        logger.info(f"📦 Content-Type: {request.content_type}")
-        logger.info(f"🧱 Content-Length: {request.content_length}")
-        logger.info(f"🧾 Charset: {request.charset}")
-        logger.info(f"🧬 Raw body (first 1000 bytes): {body_bytes[:1000]!r}")
+        # logger.info(f"📥 Headers: {dict(request.headers)}")
+        # logger.info(f"📦 Content-Type: {request.content_type}")
+        # logger.info(f"🧱 Content-Length: {request.content_length}")
+        # logger.info(f"🧾 Charset: {request.charset}")
+        # logger.info(f"🧬 Raw body (first 1000 bytes): {body_bytes[:1000]!r}")
         # await debug_multipart_request(body_bytes, request.headers)
 
         # Подменяем тело запроса обратно, чтобы работал multipart()
