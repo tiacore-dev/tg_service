@@ -9,4 +9,4 @@ services:
     environment:
       - TG_API_TOKEN=${TG_API_TOKEN}  # Устанавливаем переменные окружения
       - PORT=${PORT}
-    restart: unless-stopped
+    restart: always
