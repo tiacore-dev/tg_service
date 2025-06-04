@@ -23,14 +23,14 @@ def format_delivery_type(del_type):
     return del_type  # Оставляем оригинальный текст, если нет совпадения
 
 
-def format_route_page(data, page, previous_text: str = None):
+def format_route_page(data, page, previous_text: str | None = None):
     if page < 0 or page >= len(data):
         return "❌ Неверная страница", 1, True
 
     route = data[page]
-    send_city = route['sendCity']
-    rec_city = route['recCity']
-    parcels = route['parcels']
+    send_city = route["sendCity"]
+    rec_city = route["recCity"]
+    parcels = route["parcels"]
 
     text = f"📦 *Отправка:* {send_city} → {rec_city}\n\n"
 
@@ -54,7 +54,7 @@ def format_route_page(data, page, previous_text: str = None):
 
 
 def split_long_text(text: str, max_length=MAX_MESSAGE_LENGTH) -> list[str]:
-    lines = text.split('\n')
+    lines = text.split("\n")
     chunks = []
     current = ""
 
