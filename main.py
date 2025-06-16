@@ -1,25 +1,27 @@
-import os
 import asyncio
-from aiohttp import web
+import os
+
 from aiogram import Bot, Dispatcher
 from aiogram.types import (
     BotCommand,
-    BotCommandScopeDefault,
-    BotCommandScopeAllPrivateChats,
-    BotCommandScopeAllGroupChats,
     BotCommandScopeAllChatAdministrators,
-    BotCommandScopeChat)
+    BotCommandScopeAllGroupChats,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeChat,
+    BotCommandScopeDefault,
+)
+from aiohttp import web
 from dotenv import load_dotenv
+
 from handlers import router_main  # Импортируем router из handlers
 from keyboard import router_keyboard
 from logger import logger
 from web_app import handle_post_request
 
-
 # Загрузить переменные окружения
 load_dotenv()
-API_TOKEN = os.getenv('TG_API_TOKEN')
-port = os.getenv('PORT')
+API_TOKEN = os.getenv("TG_API_TOKEN", "")
+port = os.getenv("PORT")
 # Создаем объекты бота и диспетчера
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
@@ -28,9 +30,9 @@ dp.include_router(router_keyboard)
 dp.include_router(router_main)
 
 # Flask-like сервер на Aiohttp
-app = web.Application(client_max_size=200 * 1024 ** 2)
+app = web.Application(client_max_size=200 * 1024**2)
 
-app.router.add_post('/sent-message/', handle_post_request)
+app.router.add_post("/sent-message/", handle_post_request)
 
 
 async def start_web_server():
@@ -63,32 +65,35 @@ async def set_bot_commands():
     # Основные команды для всех пользователей
     common_commands = [
         BotCommand(command="/start", description="Запустить бота"),
+        BotCommand(command="/get_chat_id", description="Узнать ID чата"),
     ]
 
     # Команды только для избранных пользователей
     special_commands = [
         BotCommand(command="/keyboard", description="Показать клавиатуру"),
-        BotCommand(command="/remove_keyboard",
-                   description="Скрыть клавиатуру"),
+        BotCommand(command="/remove_keyboard", description="Скрыть клавиатуру"),
     ]
 
     # Устанавливаем базовые команды для всех пользователей
     await bot.set_my_commands(common_commands, scope=BotCommandScopeAllPrivateChats())
 
     # Получаем список избранных чатов
-    run_chats = os.getenv("ROUTER_CHATS").split(",")
+    run_chats = os.getenv("ROUTER_CHATS", "").split(",")
 
     # Устанавливаем дополнительные команды для избранных пользователей
     for chat_id in run_chats:
-        await bot.set_my_commands(common_commands + special_commands, scope=BotCommandScopeChat(chat_id=int(chat_id)))
+        await bot.set_my_commands(
+            common_commands + special_commands,
+            scope=BotCommandScopeChat(chat_id=int(chat_id)),
+        )
 
 
 async def main():
-    logger.info('Бот запущен')
+    logger.info("Бот запущен")
     await set_bot_commands()  # Добавляем команды в Telegram
     await asyncio.gather(
         start_web_server(),  # Запуск веб-сервера
-        dp.start_polling(bot)  # Запуск бота
+        dp.start_polling(bot),  # Запуск бота
     )
 
 

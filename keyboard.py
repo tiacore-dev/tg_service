@@ -22,13 +22,23 @@ logger = logging.getLogger("telegram_bot")
 router_keyboard = Router()
 
 
-run_chats = os.getenv("ROUTER_CHATS").split(",")
+run_chats = os.getenv("ROUTER_CHATS", "").split(",")
 logger.info(f"Доступные пользователи: {run_chats}")
 # ✅ Отображаем клавиатуру при команде /keyboard
 
 
+@router_keyboard.message(F.text == "/get_chat_id")
+async def get_chat_id(message: types.Message):
+    if not message.from_user:
+        raise ValueError()
+    chat_id = message.chat.id
+    await message.answer(f"ID чата: {chat_id}")
+
+
 @router_keyboard.message(F.text == "/keyboard")
 async def show_keyboard(message: types.Message):
+    if not message.from_user:
+        raise ValueError()
     user_id = message.from_user.id
     if str(user_id) not in run_chats:
         logger.warning(f"Not authorized user trying to get keyboard: {user_id}")
@@ -40,6 +50,8 @@ async def show_keyboard(message: types.Message):
 
 @router_keyboard.message(F.text == "/remove_keyboard")
 async def remove_keyboard(message: types.Message):
+    if not message.from_user:
+        raise ValueError()
     logger.info(f"Пользователь {message.from_user.id} скрыл клавиатуру")
     await message.answer("Клавиатура скрыта!", reply_markup=ReplyKeyboardRemove())
 
@@ -117,6 +129,8 @@ async def send_routes(user_id, routes, bot: Bot):
 @router_keyboard.callback_query(lambda call: call.data.startswith("details"))
 async def handle_details(call: types.CallbackQuery):
     try:
+        if not call.data:
+            raise ValueError()
         parts = call.data.split(":")
         if len(parts) != 3:
             logger.warning(f"Некорректный callback_data: {call.data}")
@@ -125,6 +139,8 @@ async def handle_details(call: types.CallbackQuery):
 
         _, number, page = parts
         page = int(page)
+        if not call.message:
+            raise ValueError()
         user_id = call.message.chat.id
 
         logger.info(
